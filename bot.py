@@ -36,7 +36,6 @@ EMBED_CONFIG = {
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ID del mensaje que se va a editar en vez de crear nuevos
 status_message_id: int | None = None
 
 
