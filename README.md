@@ -53,7 +53,7 @@ DISCORD_TOKEN=pega_tu_token_aqui
 Abre `bot.py` y edita la sección **CONFIGURACIÓN**:
 
 ```python
-SERVER_IP   = "X"     # IP de tu servidor Gmod
+SERVER_IP   = "192.168.1.100"     # IP de tu servidor Gmod
 SERVER_PORT = 27015                # Puerto (defecto Gmod: 27015)
 QUERY_PORT  = 27015                # Puerto de query (normalmente igual)
 
@@ -122,3 +122,13 @@ gmod_bot/
 ├── .env              ← Token (NO subir a git)
 └── .env.example      ← Plantilla del .env
 ```
+
+---
+
+<div align="center">
+
+*Desarrollado por **ExilRaizen** para **ChileLifeRP***
+
+*© 2026 ChileLifeRP — Todos los derechos reservados*
+
+</div>
