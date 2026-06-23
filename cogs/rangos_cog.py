@@ -107,7 +107,7 @@ class RanksCog(commands.Cog):
                         mensaje = (
                             f"⚠️{menciones}⚠️\n"
                             f"El tiempo del rango **{rank_data['role_name'].capitalize()}** del jugador {usuario_mencion} ha expirado.\n"
-                            f"└──*El rol ha sido retirado automáticamente en Discord. Por favor, retirarlo dentro del juego.*"
+                            f"└*El rol ha sido retirado automáticamente en Discord. Por favor, retirarlo dentro del juego.*"
                         )
                         await canal.send(mensaje)
                         
@@ -132,7 +132,7 @@ class RanksCog(commands.Cog):
         if not self.is_authorized(ctx.author):
             return await ctx.send("❌ No tienes permisos para usar este comando. Solo Owner/Co-owner pueden hacerlo.")
 
-        # Verificar que el rango escrito exista (convirtiéndolo a minúsculas por si escriben "Plata" o "PLATA")
+        # Verificar que el rango escrito exista
         rol_key = nombre_rol.lower()
         if rol_key not in ROLES_RANGO:
             return await ctx.send("❌ Rango no válido. Los rangos disponibles son: `esmeralda`, `oro`, `plata`.")
@@ -149,21 +149,51 @@ class RanksCog(commands.Cog):
             return await ctx.send("❌ No pude encontrar el rol en el servidor. Verifica que los IDs en la plantilla estén correctos.")
 
         try:
-            # Dar el rol en Discord
-            await member.add_roles(rol_obj, reason=f"Otorgado por {ctx.author.name} por {duration}.")
-            
-            # Guardar en el JSON
             data = load_ranks()
-            data.setdefault("active_ranks", []).append({
-                "guild_id": ctx.guild.id,
-                "user_id": member.id,
-                "role_id": rol_id,
-                "role_name": rol_key,
-                "end_time": time.time() + segundos,
-                "assigned_by": ctx.author.id,
-                "assigned_date": time.strftime("%Y-%m-%d %H:%M:%S")
-            })
-            save_ranks(data)
+            active_ranks = data.setdefault("active_ranks", [])
+            
+            # Buscar si el usuario ya tiene este mismo rango activo
+            rango_existente = None
+            for rank in active_ranks:
+                if rank["user_id"] == member.id and rank["role_id"] == rol_id:
+                    rango_existente = rank
+                    break
+                    
+            if rango_existente:
+                # Si ya lo tiene, sumamos el tiempo al que ya tenía restante
+                if rango_existente["end_time"] > time.time():
+                    rango_existente["end_time"] += segundos
+                else:
+                    # Por si su tiempo justo había expirado, partimos desde ahora
+                    rango_existente["end_time"] = time.time() + segundos
+                
+                # Actualizamos quién le dio la extensión y cuándo
+                rango_existente["assigned_by"] = ctx.author.id
+                rango_existente["assigned_date"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                
+                save_ranks(data)
+                
+                # Verificamos que tenga el rol en Discord (por si alguien se lo quitó a mano)
+                if rol_obj not in member.roles:
+                    await member.add_roles(rol_obj, reason=f"Extensión de rango por {ctx.author.name}.")
+                    
+                await ctx.send(f"⏳ ✅ Se ha extendido el rango **{rol_obj.name}** de **{member.name}** sumando **{duration}** adicionales.")
+            
+            else:
+                # Si no lo tenía, le damos el rol en Discord
+                await member.add_roles(rol_obj, reason=f"Otorgado por {ctx.author.name} por {duration}.")
+                
+                # Y guardamos un registro completamente nuevo en el JSON
+                active_ranks.append({
+                    "guild_id": ctx.guild.id,
+                    "user_id": member.id,
+                    "role_id": rol_id,
+                    "role_name": rol_key,
+                    "end_time": time.time() + segundos,
+                    "assigned_by": ctx.author.id,
+                    "assigned_date": time.strftime("%Y-%m-%d %H:%M:%S")
+                })
+                save_ranks(data)
 
             await ctx.send(f" El usuario **{member.name}** ha recibido el rango **{rol_obj.name}** por un periodo de **{duration}**.✅")
 
