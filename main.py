@@ -15,7 +15,8 @@ class MainBot(commands.Bot):
         # Lista de cogs a cargar (Aquí agregamos el nuevo de moderación)
         modulos = [
             "cogs.status_cog",
-            "cogs.rangos_cog"
+            "cogs.rangos_cog",
+            "cogs.help_cog",
         ]
         
         for modulo in modulos:
